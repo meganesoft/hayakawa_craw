@@ -1,6 +1,14 @@
 import requests # urlを読み込むためrequestsをインポート
 from bs4 import BeautifulSoup # htmlを読み込むためBeautifulSoupをインポート
-print("kokomade")
+import pandas as pd
+
+def write_csv(*args,**kwargs):
+    df = pd.read_csv('book.csv')
+    #画像のタイトルや概要テキストをCSVに保存する処理を書く
+    def decorator(f):
+        
+        
+
 def write_image(URL):
     images = [] # 画像リストの配列
 
