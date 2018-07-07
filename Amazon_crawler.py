@@ -26,12 +26,12 @@ def write_data(URL):
         with open('img/' + target.split('/')[-1], 'wb') as f: # imgフォルダに格納
             f.write(re.content) # .contentにて画像データとして書き込む
     
+    #CSVにテキストを書き込む
     for link in soup.find(id="M_itemDetail").findAll("p"):
         print("kokomade")
         print(link.getText())
         csv_data["text"] = str(link.getText())
 
-    print(csv_data["text"])
     csv_data.to_csv("data/book.csv",encoding="shift_jis")
     print("ok") # 確認
 
