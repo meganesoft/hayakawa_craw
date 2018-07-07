@@ -23,6 +23,7 @@ def write_data(URL):
     
     for target in images: # imagesからtargetに入れる
         re = requests.get(target)
+        
         with open('img/' + target.split('/')[-1], 'wb') as f: # imgフォルダに格納
             f.write(re.content) # .contentにて画像データとして書き込む
     
