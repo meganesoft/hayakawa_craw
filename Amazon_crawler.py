@@ -2,8 +2,10 @@ import requests # urlを読み込むためrequestsをインポート
 from bs4 import BeautifulSoup # htmlを読み込むためBeautifulSoupをインポート
 import pandas as pd
 import os.path
-#def write_csv(func):
-   # df = pd.read_csv('book.csv')
+#def csv_joiner(*File,**Filetype):
+#   def decorator(f):
+       
+#   df = pd.read_csv('book.csv')
     #画像のタイトルや概要テキストをCSVに保存する処理を書く
     #def decorator(f):
         
@@ -20,7 +22,9 @@ def write_data(URL):
             images.append(link.get("src")) # imagesリストに格納
         elif link.get("src").endswith(".png"): # imgタグ内の.pngであるsrcタグを取得
             images.append(link.get("src")) # imagesリストに格納
-    
+    ############################
+    #画像名,URLを保存する処理を書く
+    ############################
     for target in images: # imagesからtargetに入れる
         re = requests.get(target)
         
