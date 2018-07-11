@@ -21,14 +21,14 @@ pages = set()
         
 
 def write_data(URL):
-    driver = webdriver.PhantomJS()
-    drver.get(URL)
+    #driver = webdriver.PhantomJS()
+    #drver.get(URL)
     
     images = [] # 画像リストの配列
     csv_data = pd.read_csv("data/book.csv")
     try:
-        #soup = BeautifulSoup(requests.get(URL).content,'lxml') # bsでURL内を解析
-        soup = BeautifulSoup(driver.page_source,'lxml') 
+        soup = BeautifulSoup(requests.get(URL).content,'lxml') # bsでURL内を解析
+        #soup = BeautifulSoup(driver.page_source,'lxml') 
 
         for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
             if link.get("src").endswith(".jpg"): # imgタグ内の.jpgであるsrcタグを取得
