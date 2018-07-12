@@ -42,9 +42,12 @@ def write_data(URL):
         for target in images: # imagesからtargetに入れる
             re = requests.get(target)
             #正規表現でURLから画像名だけを抽出してCSVに書き込み
+            csv_data["url"] = URL
             csv_data["image"] = target.split('/')[-1]
+            csv_data.drop_duplicates(['url'],keep='first')
+            csv_data.drop_duplicates(['image'],keep='first')
+
             #画像があるときだけURLを書き込む
-            csv_data["url"]= URL
             with open('img/' + target.split('/')[-1], 'wb') as f: # imgフォルダに格納
                 f.write(re.content) # .contentにて画像データとして書き込む
         
@@ -53,11 +56,14 @@ def write_data(URL):
             print("kokomade")
             print(link.getText())
             csv_data["text"] = str(link.getText())
+            csv_data.drop_duplicates(['text'],keep='first')
 
         
-        csv_data.to_csv("data/book.csv",encoding="utf-8")
+        csv_data.to_csv("data/book.csv",encoding="utf-8",index=False,mode="a")
         print("ok") # 確認
     except AttributeError:
+        pass
+    except:
         pass
 
 #dataディレクトリを作成しdataディレクトリにcsvファイルが作成されていない時にファイルを作成する
@@ -76,7 +82,7 @@ def create_csv():
 		pass
 	else:
 		csv_data = pd.DataFrame([["1","1","1"]],columns=["url","image","text"])
-		csv_data.to_csv("data/book.csv")
+		csv_data.to_csv("data/book.csv",index=False)
 
 #未実装
 def write_text(URL):
@@ -85,6 +91,11 @@ def write_text(URL):
     for link in soup.find(id="M_itemImg").findAll("p"): # pタグを取得しlinkに格納
         print(link.getText())
         
+def drop_csv():
+    drop_csv = pd.read_csv("data/book.csv")
+    settled_csv = drop_csv.drop_duplicates(['url'],keep='first')
+    settled_csv.to_csv('data/book.csv',index=False)
+    
 def enum_links(html,base):
     soup = BeautifulSoup(requests.get(html).content,'lxml')
     #soup = BeautifulSoup(html)
@@ -107,6 +118,7 @@ def main():
     for next_link in link:
         print(next_link)
         write_data(next_link)
+        drop_csv()
 
 if __name__ == '__main__':
     main()
