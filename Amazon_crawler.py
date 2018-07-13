@@ -20,14 +20,14 @@ pages = set()
         
         
 
-def write_data(URL):
+def write_data(html):
     #driver = webdriver.PhantomJS()
     #drver.get(URL)
     
     images = [] # 画像リストの配列
     csv_data = pd.read_csv("data/book.csv")
     try:
-        soup = BeautifulSoup(requests.get(URL).content,'lxml') # bsでURL内を解析
+        soup = BeautifulSoup(requests.get(html).content,'lxml') # bsでURL内を解析
         #soup = BeautifulSoup(driver.page_source,'lxml') 
 
         for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
@@ -108,7 +108,15 @@ def enum_links(html,base):
         next_link.add(url)
     return next_link
 
-#def analize_html(url,root_url):	
+def analize_html(url):	
+    options = webdriver.chrome.options.Options()
+    options.add_argument("--headless")#これを消せばブラウザ画面が出る
+    
+    driver = webdriver.Chrome(chrome_options=options)
+
+    driver.get(url)
+    
+    return driver.page_source
 
 def main():
     #url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
@@ -117,7 +125,7 @@ def main():
     link = enum_links(url,url)
     for next_link in link:
         print(next_link)
-        write_data(next_link)
+        write_data(analize_html(next_link))
         drop_csv()
 
 if __name__ == '__main__':
