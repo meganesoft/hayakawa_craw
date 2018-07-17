@@ -115,6 +115,8 @@ def analize_html(url):
     driver = webdriver.Chrome(chrome_options=options)
 
     driver.get(url)
+    #これを実装する
+    driver.find_element_by_xpath(//div[contains(@M_ctgl
     
     return driver.page_source
 
