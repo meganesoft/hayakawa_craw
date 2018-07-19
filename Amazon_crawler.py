@@ -9,6 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from time import sleep
 
 pages = set()
 #def csv_joiner(*File,**Filetype):
@@ -22,15 +23,11 @@ pages = set()
 
 def write_data(html):
     print("書き込むよ")
-    #driver = webdriver.PhantomJS()
-    #drver.get(URL)
-    
     images = [] # 画像リストの配列
     csv_data = pd.read_csv("data/book.csv")
     try:
-        soup = BeautifulSoup(requests.get(html).content,'lxml') # bsでURL内を解析
-        #soup = BeautifulSoup(html,'lxml') 
-
+        #soup = BeautifulSoup(requests.get(html).content,'lxml') # bsでURL内を解析
+        soup = BeautifulSoup(html.page_source,'lxml') 
         for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
             if link.get("src").endswith(".jpg"): # imgタグ内の.jpgであるsrcタグを取得
                 images.append(link.get("src")) # imagesリストに格納
@@ -43,7 +40,7 @@ def write_data(html):
         for target in images: # imagesからtargetに入れる
             re = requests.get(target)
             #正規表現でURLから画像名だけを抽出してCSVに書き込み
-            csv_data["url"] = URL.current_url
+            csv_data["url"] = html.current_url
             csv_data["image"] = target.split('/')[-1]
             csv_data.drop_duplicates(['url'],keep='first')
             csv_data.drop_duplicates(['image'],keep='first')
@@ -60,11 +57,13 @@ def write_data(html):
 
         
         csv_data.to_csv("data/book.csv",encoding="utf-8",index=False,mode="a")
-        print("成功したよ") # 確認
+        print("成功したよ\n") # 確認
     except AttributeError:
         print("AttributeError")
         pass
-
+    except:
+        print("失敗した")
+        pass
 #dataディレクトリを作成しdataディレクトリにcsvファイルが作成されていない時にファイルを作成する
 def create_csv():
 	#フォルダ確認、作成
@@ -95,8 +94,19 @@ def drop_csv():
     settled_csv.to_csv('data/book.csv',index=False)
     
 def enum_links(html,base):
-    soup = BeautifulSoup(requests.get(html).content,'lxml')
-    #soup = BeautifulSoup(html)
+    options = webdriver.chrome.options.Options()
+    options.add_argument("--headless")#これを消せばブラウザ画面が出る
+    
+    driver = webdriver.Chrome(chrome_options=options)
+
+    driver.get(html)
+    try:
+        len_driver = driver.find_element_by_xpath('//*[@id="M_ctg1_3"]/span').click()
+        soup = BeautifulSoup(len_driver.page_source,'lxml')
+        print("クリックしたよ")
+    except:
+        soup = BeautifulSoup(driver.page_source,'lxml')
+
     links = soup.select("a[href]")
     next_link = set()
 	
@@ -111,22 +121,25 @@ def analyze_html(url):
     options.add_argument("--headless")#これを消せばブラウザ画面が出る
     
     driver = webdriver.Chrome(chrome_options=options)
-
+    #driverをゲットできなかったらurlを返す,ット出来たらjs実行後のdriverか実行してないdriverを返す
     try:
         driver.get(url)
-        driver.execute_script(script[contains(text(),"showMake")])
-        return driver.page_source
-
     except:
-        #driver.execute_script("showMakeShopChildCategory('M_childCtgs2', 'date', 2);")
-        #print(driver.page_source)
-        pass
-    
+        print("urlとして返すわ")
+        return url
+    try:
+        driver.execute_script("showMakeShopChildCategory")
+        print("実行後のドライバー返した")
+        return driver
+    except:
+        print("driver返した")
+        return driver
 
 def main():
-    url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
-    #url = "http://www.hayakawa-online.co.jp/"
+    #url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
+    url = "http://www.hayakawa-online.co.jp/"
     create_csv()
+    write_data(analyze_html(url))
     link = enum_links(url,url)
     for next_link in link:
         print("取得したURLだよ！")
