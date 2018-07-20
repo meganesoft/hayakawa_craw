@@ -26,8 +26,9 @@ def write_data(html):
     images = [] # 画像リストの配列
     csv_data = pd.read_csv("data/book.csv")
     try:
-        #soup = BeautifulSoup(requests.get(html).content,'lxml') # bsでURL内を解析
-        soup = BeautifulSoup(html.page_source,'lxml') 
+        soup = BeautifulSoup(requests.get(html.current_url).content,'lxml') # bsでURL内を解析
+        #soup = BeautifulSoup(html.page_source,'lxml') 
+        print(soup.title.string)
         for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
             if link.get("src").endswith(".jpg"): # imgタグ内の.jpgであるsrcタグを取得
                 images.append(link.get("src")) # imagesリストに格納
@@ -58,11 +59,11 @@ def write_data(html):
         
         csv_data.to_csv("data/book.csv",encoding="utf-8",index=False,mode="a")
         print("成功したよ\n") # 確認
-    except AttributeError:
-        print("AttributeError")
-        pass
-    except:
-        print("失敗した")
+    #except AttributeError:
+        #print("AttributeError")
+        #pass
+    except NameError:
+        print("失敗した\n")
         pass
 #dataディレクトリを作成しdataディレクトリにcsvファイルが作成されていない時にファイルを作成する
 def create_csv():
@@ -93,7 +94,7 @@ def drop_csv():
     settled_csv = drop_csv.drop_duplicates(['url'],keep='first')
     settled_csv.to_csv('data/book.csv',index=False)
     
-def enum_links(html,base):
+def enum_links (html,base):
     options = webdriver.chrome.options.Options()
     options.add_argument("--headless")#これを消せばブラウザ画面が出る
     
@@ -101,7 +102,7 @@ def enum_links(html,base):
 
     driver.get(html)
     try:
-        len_driver = driver.find_element_by_xpath('//*[@id="M_ctg1_3"]/span').click()
+        len_driver = driver.find_element_by_xpath('//*[@id="M_ctg1_3"]/span/a').click()
         soup = BeautifulSoup(len_driver.page_source,'lxml')
         print("クリックしたよ")
     except:
@@ -111,10 +112,13 @@ def enum_links(html,base):
     next_link = set()
 	
     for a in links:
-        href = a.attrs['href']
-        url = urljoin(base,href)
-        next_link.add(url)
-    return next_link
+        if a.attr['href'] is not None:
+            href = a.attrs['href']
+            url = urljoin(base,href)
+            next_link.add(url)
+            return enum_links(url,url) 
+        else:
+            return next_link
 
 def analyze_html(url):	
     options = webdriver.chrome.options.Options()
@@ -136,8 +140,8 @@ def analyze_html(url):
         return driver
 
 def main():
-    #url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
-    url = "http://www.hayakawa-online.co.jp/"
+    url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
+    #url = "http://www.hayakawa-online.co.jp/"
     create_csv()
     write_data(analyze_html(url))
     link = enum_links(url,url)
