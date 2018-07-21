@@ -59,10 +59,10 @@ def write_data(html):
         
         csv_data.to_csv("data/book.csv",encoding="utf-8",index=False,mode="a")
         print("成功したよ\n") # 確認
-    #except AttributeError:
-        #print("AttributeError")
-        #pass
-    except NameError:
+    except AttributeError:
+        print("AttributeError")
+        pass
+    except:
         print("失敗した\n")
         pass
 #dataディレクトリを作成しdataディレクトリにcsvファイルが作成されていない時にファイルを作成する
@@ -149,7 +149,8 @@ def analyze_html(url):
         return driver
 
 def main():
-    url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
+    url = 'http://www.hayakawa-online.co.jp/shopbrand/genre_001001/'
+    #url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
     #url = "http://www.hayakawa-online.co.jp/"
     create_csv()
     write_data(analyze_html(url))
