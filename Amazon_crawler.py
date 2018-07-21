@@ -109,16 +109,25 @@ def enum_links (html,base):
         soup = BeautifulSoup(driver.page_source,'lxml')
 
     links = soup.select("a[href]")
-    next_link = set()
+    next_link = []
+
+    for link in soup.findAll("a"):
+        if link.attrs['href'] is not None:
+            if(link.attrs['href'].startswith('/')):
+                next_link.append(base+link.attrs['href'])
+            else:
+                next_link.append(link.attrs['href'])
+    return next_link
+    
 	
-    for a in links:
-        if a.attr['href'] is not None:
-            href = a.attrs['href']
-            url = urljoin(base,href)
-            next_link.add(url)
-            return enum_links(url,url) 
-        else:
-            return next_link
+    #for a in links:
+    #    if a.attr['href'] is not None:
+    #        href = a.attrs['href']
+    #        url = urljoin(base,href)
+    #        next_link.add(url)
+    #        return enum_links(url,url) 
+    #    else:
+    #        return next_link
 
 def analyze_html(url):	
     options = webdriver.chrome.options.Options()
