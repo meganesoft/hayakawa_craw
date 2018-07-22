@@ -62,7 +62,7 @@ def write_data(html):
     except AttributeError:
         print("AttributeError")
         pass
-    except:
+    except NameError:
         print("失敗した\n")
         pass
 #dataディレクトリを作成しdataディレクトリにcsvファイルが作成されていない時にファイルを作成する
@@ -108,26 +108,16 @@ def enum_links (html,base):
     except:
         soup = BeautifulSoup(driver.page_source,'lxml')
 
-    links = soup.select("a[href]")
-    next_link = []
-
-    for link in soup.findAll("a"):
-        if link.attrs['href'] is not None:
-            if(link.attrs['href'].startswith('/')):
-                next_link.append(base+link.attrs['href'])
-            else:
-                next_link.append(link.attrs['href'])
-    return next_link
-    
-	
-    #for a in links:
-    #    if a.attr['href'] is not None:
-    #        href = a.attrs['href']
-    #        url = urljoin(base,href)
-    #        next_link.add(url)
-    #        return enum_links(url,url) 
-    #    else:
-    #        return next_link
+    links = soup.findAll('a')
+    next_link = set()
+    for a in links:
+        if a.attrs['href'] is not None:
+            href = a.attrs['href']
+            url = urljoin(base,href)
+            next_link.add(url)
+            #return enum_links(url,url) 
+    else:
+        return next_link
 
 def analyze_html(url):	
     options = webdriver.chrome.options.Options()
@@ -155,6 +145,7 @@ def main():
     create_csv()
     write_data(analyze_html(url))
     link = enum_links(url,url)
+    print(link)
     for next_link in link:
         print("取得したURLだよ！")
         print(next_link)
