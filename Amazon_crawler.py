@@ -11,7 +11,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 
-pages = set()
 #def csv_joiner(*File,**Filetype):
 #   def decorator(f):
        
@@ -26,8 +25,8 @@ def write_data(html):
     images = [] # 画像リストの配列
     csv_data = pd.read_csv("data/book.csv")
     try:
-        soup = BeautifulSoup(requests.get(html.current_url).content,'lxml') # bsでURL内を解析
-        #soup = BeautifulSoup(html.page_source,'lxml') 
+        #soup = BeautifulSoup(requests.get(html.current_url).content,'lxml') # bsでURL内を解析
+        soup = BeautifulSoup(html.page_source,'lxml') 
         print(soup.title.string)
         for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
             if link.get("src").endswith(".jpg"): # imgタグ内の.jpgであるsrcタグを取得
@@ -94,13 +93,16 @@ def drop_csv():
     settled_csv = drop_csv.drop_duplicates(['url'],keep='first')
     settled_csv.to_csv('data/book.csv',index=False)
     
-def enum_links (html,base):
+def enum_links (base_html,pages):
+    print(type(base_html))
+    #一度解析したurlを読み込まないようにする
+    if base_html in pages: return
     options = webdriver.chrome.options.Options()
     options.add_argument("--headless")#これを消せばブラウザ画面が出る
     
     driver = webdriver.Chrome(chrome_options=options)
 
-    driver.get(html)
+    driver.get(base_html)
     try:
         len_driver = driver.find_element_by_xpath('//*[@id="M_ctg1_3"]/span/a').click()
         soup = BeautifulSoup(len_driver.page_source,'lxml')
@@ -109,15 +111,18 @@ def enum_links (html,base):
         soup = BeautifulSoup(driver.page_source,'lxml')
 
     links = soup.findAll('a')
-    next_link = set()
+    #returnがおかしいと思われ
     for a in links:
         if a.attrs['href'] is not None:
             href = a.attrs['href']
-            url = urljoin(base,href)
-            next_link.add(url)
-            #return enum_links(url,url) 
+            print(href)
+            url = urljoin(base_html,href)
+            pages.append(url)
+            print(url)
+            return enum_links(url,pages) 
+        else: return pages
     else:
-        return next_link
+        return pages
 
 def analyze_html(url):	
     options = webdriver.chrome.options.Options()
@@ -139,12 +144,13 @@ def analyze_html(url):
         return driver
 
 def main():
-    url = 'http://www.hayakawa-online.co.jp/shopbrand/genre_001001/'
+    #url = 'http://www.hayakawa-online.co.jp/shopbrand/genre_001001/'
     #url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
-    #url = "http://www.hayakawa-online.co.jp/"
+    url = "http://www.hayakawa-online.co.jp/"
+    pages = []
     create_csv()
     write_data(analyze_html(url))
-    link = enum_links(url,url)
+    link = enum_links(url,pages)
     print(link)
     for next_link in link:
         print("取得したURLだよ！")
