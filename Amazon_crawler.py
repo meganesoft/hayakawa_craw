@@ -113,14 +113,14 @@ def enum_links (base_html,pages):
     links = soup.findAll('a')
     #returnがおかしいと思われ
     for a in links:
-        if a.attrs['href'] is not None:
-            href = a.attrs['href']
-            print(href)
-            url = urljoin(base_html,href)
-            pages.append(url)
-            print(url)
-            return enum_links(url,pages) 
-        else: return pages
+        if (a.has_key('href')):
+            if a.attrs['href'] is not None:
+                href = a.attrs['href']
+                print(href)
+                url = urljoin(base_html,href)
+                pages.append(url)
+                print(url)
+                #return enum_links(url,pages) 
     else:
         return pages
 
@@ -145,8 +145,8 @@ def analyze_html(url):
 
 def main():
     #url = 'http://www.hayakawa-online.co.jp/shopbrand/genre_001001/'
-    #url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
-    url = "http://www.hayakawa-online.co.jp/"
+    url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
+    #url = "http://www.hayakawa-online.co.jp/"
     pages = []
     create_csv()
     write_data(analyze_html(url))
