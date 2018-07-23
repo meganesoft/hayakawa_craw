@@ -10,14 +10,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-#def csv_joiner(*File,**Filetype):
-#   def decorator(f):
-       
-#   df = pd.read_csv('book.csv')
-    #画像のタイトルや概要テキストをCSVに保存する処理を書く
-    #def decorator(f):
-        
-        
 
 def write_data(html):
     print("書き込むよ")
