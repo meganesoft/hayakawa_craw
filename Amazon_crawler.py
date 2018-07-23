@@ -5,10 +5,10 @@ import os.path
 from urllib.request import urlopen
 from urllib.parse import urljoin
 import re
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+#from selenium import webdriver
+#from selenium.webdriver.common.by import By
+#from selenium.webdriver.support.ui import WebDriverWait
+#from selenium.webdriver.support import expected_conditions as EC
 
 pages = set()
 #def csv_joiner(*File,**Filetype):
@@ -21,14 +21,14 @@ pages = set()
         
 
 def write_data(URL):
-    driver = webdriver.PhantomJS()
-    drver.get(URL)
+    #driver = webdriver.PhantomJS()
+    #drver.get(URL)
     
     images = [] # 画像リストの配列
-    csv_data = pd.read_csv("data/book.csv")
+    csv_data = pd.read_csv("data/book.csv",encoding='cp932')
     try:
-        #soup = BeautifulSoup(requests.get(URL).content,'lxml') # bsでURL内を解析
-        soup = BeautifulSoup(driver.page_source,'lxml') 
+        soup = BeautifulSoup(requests.get(URL).content,'lxml') # bsでURL内を解析
+        #soup = BeautifulSoup(driver.page_source,'lxml') 
 
         for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
             if link.get("src").endswith(".jpg"): # imgタグ内の.jpgであるsrcタグを取得
@@ -54,12 +54,13 @@ def write_data(URL):
             print(link.getText())
             csv_data["text"] = str(link.getText())
 
-        
-        csv_data.to_csv("data/book.csv",encoding="utf-8")
+        #csv_data.sort_values(['url'])
+        csv_data.to_csv("data/book.csv",encoding="cp932")
         print("ok") # 確認
     except AttributeError:
         pass
-
+    except:
+        pass
 #dataディレクトリを作成しdataディレクトリにcsvファイルが作成されていない時にファイルを作成する
 def create_csv():
 	#フォルダ確認、作成
