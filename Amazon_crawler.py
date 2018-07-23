@@ -5,11 +5,10 @@ import os.path
 from urllib.request import urlopen
 from urllib.parse import urljoin
 import re
-<<<<<<< HEAD
-#from selenium import webdriver
-#from selenium.webdriver.common.by import By
-#from selenium.webdriver.support.ui import WebDriverWait
->>>>>>> f95024e08cb9ae6a8ead38aacd330d1d48916225
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 #def csv_joiner(*File,**Filetype):
 #   def decorator(f):
@@ -20,27 +19,14 @@ import re
         
         
 
-<<<<<<< HEAD
-def write_data(URL):
-    #driver = webdriver.PhantomJS()
-    #drver.get(URL)
-    
-=======
 def write_data(html):
     print("書き込むよ")
->>>>>>> f95024e08cb9ae6a8ead38aacd330d1d48916225
     images = [] # 画像リストの配列
     csv_data = pd.read_csv("data/book.csv",encoding='cp932')
     try:
-<<<<<<< HEAD
-        soup = BeautifulSoup(requests.get(URL).content,'lxml') # bsでURL内を解析
-        #soup = BeautifulSoup(driver.page_source,'lxml') 
-
-=======
         #soup = BeautifulSoup(requests.get(html.current_url).content,'lxml') # bsでURL内を解析
         soup = BeautifulSoup(html.page_source,'lxml') 
         print(soup.title.string)
->>>>>>> f95024e08cb9ae6a8ead38aacd330d1d48916225
         for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
             if link.get("src").endswith(".jpg"): # imgタグ内の.jpgであるsrcタグを取得
                 images.append(link.get("src")) # imagesリストに格納
@@ -68,26 +54,15 @@ def write_data(html):
             csv_data["text"] = str(link.getText())
             csv_data.drop_duplicates(['text'],keep='first')
 
-<<<<<<< HEAD
-        #csv_data.sort_values(['url'])
-        csv_data.to_csv("data/book.csv",encoding="cp932")
-        print("ok") # 確認
-=======
         
         csv_data.to_csv("data/book.csv",encoding="utf-8",index=False,mode="a")
         print("成功したよ\n") # 確認
->>>>>>> f95024e08cb9ae6a8ead38aacd330d1d48916225
     except AttributeError:
         print("AttributeError")
         pass
     except NameError:
         print("失敗した\n")
         pass
-<<<<<<< HEAD
-    except:
-        pass
-=======
->>>>>>> f95024e08cb9ae6a8ead38aacd330d1d48916225
 #dataディレクトリを作成しdataディレクトリにcsvファイルが作成されていない時にファイルを作成する
 def create_csv():
 	#フォルダ確認、作成
