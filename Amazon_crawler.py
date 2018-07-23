@@ -9,13 +9,6 @@ import re
 #from selenium import webdriver
 #from selenium.webdriver.common.by import By
 #from selenium.webdriver.support.ui import WebDriverWait
-#from selenium.webdriver.support import expected_conditions as EC
-=======
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from time import sleep
 >>>>>>> f95024e08cb9ae6a8ead38aacd330d1d48916225
 
 #def csv_joiner(*File,**Filetype):
