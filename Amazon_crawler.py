@@ -22,7 +22,7 @@ from selenium.webdriver.support import expected_conditions as EC
 def write_data(html):
     print("書き込むよ")
     images = [] # 画像リストの配列
-    csv_data = pd.read_csv("data/book.csv",encoding='cp932')
+    csv_data = pd.read_csv("data/book.csv")
     try:
         #soup = BeautifulSoup(requests.get(html.current_url).content,'lxml') # bsでURL内を解析
         soup = BeautifulSoup(html.page_source,'lxml') 
