@@ -9,6 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from time import sleep
 
 
 def write_data(html):
@@ -111,7 +112,7 @@ def enum_links (base_html,pages):
                 url = urljoin(base_html,href)
                 pages.append(url)
                 print(url)
-                return enum_links(url,pages) 
+                #return enum_links(url,pages) 
     else:
         return pages
 
