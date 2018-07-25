@@ -18,7 +18,7 @@ def write_data(html):
     csv_data = pd.read_csv("data/book.csv")
     try:
         #soup = BeautifulSoup(requests.get(html.current_url).content,'lxml') # bsでURL内を解析
-        soup = BeautifulSoup(html.page_source,'lxml') 
+        soup = BeautifulSoup(html.page_source.encode('utf-8'),'lxml') 
         print(soup.title.string)
         for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
             if link.get("src").endswith(".jpg"): # imgタグ内の.jpgであるsrcタグを取得
@@ -97,10 +97,10 @@ def enum_links (base_html,pages):
     driver.get(base_html)
     try:
         len_driver = driver.find_element_by_xpath('//*[@id="M_ctg1_3"]/span/a').click()
-        soup = BeautifulSoup(len_driver.page_source,'lxml')
+        soup = BeautifulSoup(len_driver.page_source.encode('utf-8'),'lxml')
         print("クリックしたよ")
     except:
-        soup = BeautifulSoup(driver.page_source,'lxml')
+        soup = BeautifulSoup(driver.page_source.encode('utf-8'),'lxml')
 
     links = soup.findAll('a')
     #returnがおかしいと思われ
