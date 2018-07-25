@@ -11,14 +11,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 
+pages = set()
 
 def write_data(html):
     print("書き込むよ")
     images = [] # 画像リストの配列
     csv_data = pd.read_csv("data/book.csv")
     try:
-        #soup = BeautifulSoup(requests.get(html.current_url).content,'lxml') # bsでURL内を解析
-        soup = BeautifulSoup(html.page_source.encode('utf-8'),'lxml') 
+        soup = BeautifulSoup(requests.get(html.current_url).content,'lxml') # bsでURL内を解析
+        #soup = BeautifulSoup(html.page_source.encode('utf-8'),'lxml') 
+        print('取得したタイトル')
         print(soup.title.string)
         for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
             if link.get("src").endswith(".jpg"): # imgタグ内の.jpgであるsrcタグを取得
@@ -51,6 +53,8 @@ def write_data(html):
         csv_data.to_csv("data/book.csv",encoding="utf-8",index=False,mode="a")
         print("成功したよ\n") # 確認
     except AttributeError:
+        import traceback
+        traceback.print_exc()
         print("AttributeError")
         pass
     except NameError:
@@ -85,10 +89,8 @@ def drop_csv():
     settled_csv = drop_csv.drop_duplicates(['url'],keep='first')
     settled_csv.to_csv('data/book.csv',index=False)
     
-def enum_links (base_html,pages):
-    print(type(base_html))
-    #一度解析したurlを読み込まないようにする
-    if base_html in pages: return
+def enum_links (base_html):
+    global pages
     options = webdriver.chrome.options.Options()
     options.add_argument("--headless")#これを消せばブラウザ画面が出る
     
@@ -97,22 +99,25 @@ def enum_links (base_html,pages):
     driver.get(base_html)
     try:
         len_driver = driver.find_element_by_xpath('//*[@id="M_ctg1_3"]/span/a').click()
-        soup = BeautifulSoup(len_driver.page_source.encode('utf-8'),'lxml')
+        soup = BeautifulSoup(len_driver.page_source,'lxml')
         print("クリックしたよ")
     except:
-        soup = BeautifulSoup(driver.page_source.encode('utf-8'),'lxml')
+        soup = BeautifulSoup(driver.page_source,'lxml')
 
     links = soup.findAll('a')
+    print(links)
     #returnがおかしいと思われ
     for a in links:
+        #hrefがあるか確かめる
         if(a.has_key('href')):
             if a.attrs['href'] is not None:
-                href = a.attrs['href']
-                print(href)
-                url = urljoin(base_html,href)
-                pages.append(url)
-                print(url)
-                #return enum_links(url,pages) 
+                #一度解析したリンクに飛んでないか確かめる
+                if a.attrs['href'] not in pages:
+                    href = a.attrs['href']
+                    newPage = urljoin(base_html,href)
+                    pages.add(newPage)
+                    print(newPage)
+                    enum_links(newPage) 
     else:
         return pages
 
@@ -128,7 +133,7 @@ def analyze_html(url):
         print("urlとして返すわ")
         return url
     try:
-        driver.execute_script("showMakeShopChildCategory")
+        #driver.execute_script("showMakeShopChildCategory")
         print("実行後のドライバー返した")
         return driver
     except:
@@ -136,13 +141,12 @@ def analyze_html(url):
         return driver
 
 def main():
-    url = 'http://www.hayakawa-online.co.jp/shopbrand/genre_001001/'
+    #url = 'http://www.hayakawa-online.co.jp/shopbrand/genre_001001/'
     #url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
-    #url = "http://www.hayakawa-online.co.jp/"
-    pages = []
+    url = "http://www.hayakawa-online.co.jp/"
     create_csv()
-    write_data(analyze_html(url))
-    link = enum_links(url,pages)
+    #write_data(analyze_html(url))
+    link = enum_links(url)
     print(link)
     for next_link in link:
         print("取得したURLだよ！")
