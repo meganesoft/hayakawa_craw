@@ -60,6 +60,7 @@ def write_data(html):
     except NameError:
         print("失敗した\n")
         pass
+        
 #dataディレクトリを作成しdataディレクトリにcsvファイルが作成されていない時にファイルを作成する
 def create_csv():
 	#フォルダ確認、作成
@@ -90,34 +91,37 @@ def drop_csv():
     settled_csv.to_csv('data/book.csv',index=False)
     
 def enum_links (base_html):
+    print("作業中")
     global pages
     options = webdriver.chrome.options.Options()
     options.add_argument("--headless")#これを消せばブラウザ画面が出る
     
     driver = webdriver.Chrome(chrome_options=options)
 
-    driver.get(base_html)
     try:
+        driver.get(base_html)
         len_driver = driver.find_element_by_xpath('//*[@id="M_ctg1_3"]/span/a').click()
         soup = BeautifulSoup(len_driver.page_source,'lxml')
+        len_driver.close()
         print("クリックしたよ")
     except:
-        soup = BeautifulSoup(driver.page_source,'lxml')
+        soup = BeautifulSoup(requests.get(base_html).content,'lxml')
 
+    driver.close()
     links = soup.findAll('a')
-    print(links)
     #returnがおかしいと思われ
     for a in links:
         #hrefがあるか確かめる
-        if(a.has_key('href')):
-            if a.attrs['href'] is not None:
-                #一度解析したリンクに飛んでないか確かめる
-                if a.attrs['href'] not in pages:
-                    href = a.attrs['href']
-                    newPage = urljoin(base_html,href)
-                    pages.add(newPage)
-                    print(newPage)
-                    enum_links(newPage) 
+        if'href' in a.attrs:
+           # if a.attrs['href'] is not None:
+           #一度解析したリンクに飛んでないか確かめる
+            if a.attrs['href'] not in pages:
+                href = a.attrs['href']
+                newPage = urljoin('http://www.hayakawa-online.co.jp/',href)
+            if newPage not in pages:
+                pages.add(newPage)
+                print(newPage)
+                enum_links(newPage) 
     else:
         return pages
 
@@ -141,9 +145,9 @@ def analyze_html(url):
         return driver
 
 def main():
-    #url = 'http://www.hayakawa-online.co.jp/shopbrand/genre_001001/'
+    url = 'http://www.hayakawa-online.co.jp/shopbrand/genre_001001/'
     #url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
-    url = "http://www.hayakawa-online.co.jp/"
+    #url = "http://www.hayakawa-online.co.jp/"
     create_csv()
     #write_data(analyze_html(url))
     link = enum_links(url)
@@ -153,7 +157,7 @@ def main():
         print(next_link)
         write_data(analyze_html(next_link))
         drop_csv()
-        sleep(0.001)
+        sleep(0.00001)
 
 if __name__ == '__main__':
     main()
