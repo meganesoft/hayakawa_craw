@@ -18,7 +18,7 @@ def write_data(html):
     images = [] # 画像リストの配列
     csv_data = pd.read_csv("data/book.csv")
     try:
-        soup = BeautifulSoup(requests.get(html.current_url).content,'lxml') # bsでURL内を解析
+        soup = BeautifulSoup(requests.get(html).content,'lxml') # bsでURL内を解析
         #soup = BeautifulSoup(html.page_source.encode('utf-8'),'lxml') 
         print('取得したタイトル')
         print(soup.title.string)
@@ -34,7 +34,7 @@ def write_data(html):
         for target in images: # imagesからtargetに入れる
             re = requests.get(target)
             #正規表現でURLから画像名だけを抽出してCSVに書き込み
-            csv_data["url"] = html.current_url
+            csv_data["url"] = html
             csv_data["image"] = target.split('/')[-1]
             csv_data.drop_duplicates(['url'],keep='first')
             csv_data.drop_duplicates(['image'],keep='first')
@@ -93,6 +93,8 @@ def drop_csv():
 def enum_links (base_html):
     print("作業中")
     global pages
+    soup = BeautifulSoup(requests.get(base_html).content,'lxml')
+    '''
     options = webdriver.chrome.options.Options()
     options.add_argument("--headless")#これを消せばブラウザ画面が出る
     
@@ -105,23 +107,28 @@ def enum_links (base_html):
         len_driver.close()
         print("クリックしたよ")
     except:
-        soup = BeautifulSoup(requests.get(base_html).content,'lxml')
+        try:
+            soup = BeautifulSoup(requests.get(base_html).content,'lxml')
+        except:
+            return
 
     driver.close()
+    '''
     links = soup.findAll('a')
     #returnがおかしいと思われ
     for a in links:
         #hrefがあるか確かめる
         if'href' in a.attrs:
-           # if a.attrs['href'] is not None:
+           #if a.attrs['href'] is not None:
            #一度解析したリンクに飛んでないか確かめる
             if a.attrs['href'] not in pages:
-                href = a.attrs['href']
-                newPage = urljoin('http://www.hayakawa-online.co.jp/',href)
-            if newPage not in pages:
-                pages.add(newPage)
-                print(newPage)
-                enum_links(newPage) 
+                if('shopdetail' in a.attrs['href'] or 'shopbrand' in a.attrs['href']):
+                    href = a.attrs['href']
+                    newPage = urljoin('http://www.hayakawa-online.co.jp/',href)
+                    if newPage not in pages:
+                        pages.add(newPage)
+                        print(pages)
+                        enum_links(newPage) 
     else:
         return pages
 
@@ -145,19 +152,19 @@ def analyze_html(url):
         return driver
 
 def main():
-    url = 'http://www.hayakawa-online.co.jp/shopbrand/genre_001001/'
-    #url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/page1/order/"
+    #original_url = ['http://www.hayakawa-online.co.jp/shopbrand/genre_001001/','http://www.hayakawa-online.co.jp/shopbrand/genre_001002/','http://www.hayakawa-online.co.jp/shopbrand/genre_001003/','http://www.hayakawa-online.co.jp/shopbrand/genre_001004/','http://www.hayakawa-online.co.jp/shopbrand/genre_001004/','http://www.hayakawa-online.co.jp/shopbrand/genre_001006/','http://www.hayakawa-online.co.jp/shopbrand/genre_001007/','http://www.hayakawa-online.co.jp/shopbrand/genre_001008/','http://www.hayakawa-online.co.jp/shopbrand/genre_002008/','http://www.hayakawa-online.co.jp/shopbrand/genre_001009/','http://www.hayakawa-online.co.jp/shopbrand/genre_001010/','http://www.hayakawa-online.co.jp/shopbrand/genre_001011/','http://www.hayakawa-online.co.jp/shopbrand/genre_001012/','http://www.hayakawa-online.co.jp/shopbrand/genre_001013/','http://www.hayakawa-online.co.jp/shopbrand/genre_001014/','http://www.hayakawa-online.co.jp/shopbrand/genre_001015/','http://www.hayakawa-online.co.jp/shopbrand/genre_001016/']
+    original_url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/"
     #url = "http://www.hayakawa-online.co.jp/"
     create_csv()
     #write_data(analyze_html(url))
-    link = enum_links(url)
-    print(link)
+    #for url in original_url:
+    link = enum_links(original_url)
     for next_link in link:
         print("取得したURLだよ！")
         print(next_link)
-        write_data(analyze_html(next_link))
+        write_data(next_link)
         drop_csv()
-        sleep(0.00001)
+        sleep(0.001)
 
 if __name__ == '__main__':
     main()
