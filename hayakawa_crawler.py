@@ -28,6 +28,7 @@ def write_data(html):
                 images.append(link.get("src")) # imagesリストに格納
             elif link.get("src").endswith(".png"): # imgタグ内の.pngであるsrcタグを取得
                 images.append(link.get("src")) # imagesリストに格納
+        print(images)
         
         ############################
         #画像名,URLを保存する処理を書く
@@ -96,7 +97,7 @@ def drop_csv():
 def enum_links (base_html):
     print("作業中")
     global pages
-    base_html = urlparse(base_html).scheme+"://"+urlparse(base_html).netloc
+    #base_html = urlparse(base_html).scheme+"://"+urlparse(base_html).netloc
     soup = BeautifulSoup(requests.get(base_html).content,'lxml')
     '''
     options = webdriver.chrome.options.Options()
@@ -118,9 +119,9 @@ def enum_links (base_html):
 
     driver.close()
     '''
-    #links = soup.findAll('a',href=re.compile("^(\/|.*"+base_html+")"))
+    #links = soup.findAll('a',href=re.compile("*/shopbrand/*|*/shopdetail/*"))
     #returnがおかしいと思われ
-    for a in soup.findAll('a',href=re.compile("^(\/|.*"+base_html+")")):
+    for a in soup.findAll('a',href=re.compile("^/shopbrand/*|^/shopdetail/*")):
         #hrefがあるか確かめる
         if'href' in a.attrs:
            #if a.attrs['href'] is not None:
