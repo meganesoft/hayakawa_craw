@@ -91,6 +91,8 @@ def drop_csv():
     settled_csv = drop_csv.drop_duplicates(['url'],keep='first')
     settled_csv.to_csv('data/book.csv',index=False)
     
+#巡回するリンクのリストを作る
+#seleniumには屈服した
 def enum_links (base_html):
     print("作業中")
     global pages
@@ -134,6 +136,7 @@ def enum_links (base_html):
     else:
         return pages
 
+#selenium操作関数
 def analyze_html(url):	
     options = webdriver.chrome.options.Options()
     options.add_argument("--headless")#これを消せばブラウザ画面が出る
