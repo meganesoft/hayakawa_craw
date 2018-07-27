@@ -119,7 +119,7 @@ def enum_links (base_html):
 
     driver.close()
     '''
-    #links = soup.findAll('a',href=re.compile("*/shopbrand/*|*/shopdetail/*"))
+    #links = soup.findAll('a',href=re.compile("^shopbrand/*|^shopdetail/*"))
     #returnがおかしいと思われ
     for a in soup.findAll('a',href=re.compile("^/shopbrand/*|^/shopdetail/*")):
         #hrefがあるか確かめる
@@ -132,7 +132,7 @@ def enum_links (base_html):
                     newPage = urljoin('http://www.hayakawa-online.co.jp/',href)
                     if newPage not in pages:
                         pages.add(newPage)
-                        print(pages)
+                        print(len(pages))
                         enum_links(newPage) 
     else:
         return pages
@@ -170,7 +170,7 @@ def main():
             print(next_link)
             write_data(next_link)
             drop_csv()
-            sleep(0.001)
+            sleep(0.0001)
 
 if __name__ == '__main__':
     main()
