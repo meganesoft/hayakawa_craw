@@ -98,7 +98,10 @@ def enum_links (base_html):
     print("作業中")
     global pages
     #base_html = urlparse(base_html).scheme+"://"+urlparse(base_html).netloc
-    soup = BeautifulSoup(requests.get(base_html).content,'lxml')
+    try:
+        soup = BeautifulSoup(requests.get(base_html).content,'lxml')
+    except:
+        return
     '''
     options = webdriver.chrome.options.Options()
     options.add_argument("--headless")#これを消せばブラウザ画面が出る
