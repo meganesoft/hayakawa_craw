@@ -38,8 +38,10 @@ def write_data(html):
             #正規表現でURLから画像名だけを抽出してCSVに書き込み
             csv_data["url"] = html
             csv_data["image"] = target.split('/')[-1]
+            csv_data["title"] = soup.title.string
             csv_data.drop_duplicates(['url'],keep='first')
             csv_data.drop_duplicates(['image'],keep='first')
+            csv_data.drop_duplicates(['title'],keep='first')
 
             #画像があるときだけURLを書き込む
             with open('img/' + target.split('/')[-1], 'wb') as f: # imgフォルダに格納
@@ -59,7 +61,7 @@ def write_data(html):
         traceback.print_exc()
         print("AttributeError")
         pass
-    except NameError:
+    except:
         print("失敗した\n")
         pass
         
@@ -78,7 +80,7 @@ def create_csv():
 	if os.path.isfile("data/book.csv"):
 		pass
 	else:
-		csv_data = pd.DataFrame([["1","1","1"]],columns=["url","image","text"])
+		csv_data = pd.DataFrame([["1","1","1","1"]],columns=["url","image","text","title"])
 		csv_data.to_csv("data/book.csv",index=False)
 
 #未実装
@@ -124,19 +126,17 @@ def enum_links (base_html):
     '''
     #links = soup.findAll('a',href=re.compile("^shopbrand/*|^shopdetail/*"))
     #returnがおかしいと思われ
-    for a in soup.findAll('a',href=re.compile("^/shopbrand/*|^/shopdetail/*")):
+    for a in soup.findAll(href=re.compile("^/shopbrand/genre*|^/shopdetail/.*/order/$")):
         #hrefがあるか確かめる
         if'href' in a.attrs:
-           #if a.attrs['href'] is not None:
            #一度解析したリンクに飛んでないか確かめる
-            if a.attrs['href'] not in pages:
-                if('shopdetail' in a.attrs['href'] or 'shopbrand' in a.attrs['href']):
-                    href = a.attrs['href']
-                    newPage = urljoin('http://www.hayakawa-online.co.jp/',href)
-                    if newPage not in pages:
-                        pages.add(newPage)
-                        print(len(pages))
-                        enum_links(newPage) 
+            if('shopdetail' in a.attrs['href'] or 'shopbrand' in a.attrs['href']):
+                href = a.attrs['href']
+                newPage = urljoin('http://www.hayakawa-online.co.jp/',href)
+                if newPage not in pages:
+                    pages.add(newPage)
+                    print(len(pages))
+                    enum_links(newPage) 
     else:
         return pages
 
