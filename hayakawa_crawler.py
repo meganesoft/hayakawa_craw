@@ -80,7 +80,7 @@ def create_csv():
 	if os.path.isfile("data/book.csv"):
 		pass
 	else:
-		csv_data = pd.DataFrame([["1","1","1","1"]],columns=["url","image","text","title"])
+		csv_data = pd.DataFrame(index=[],columns=["url","image","text","title"])
 		csv_data.to_csv("data/book.csv",index=False)
 
 #未実装
