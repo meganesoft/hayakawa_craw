@@ -11,7 +11,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
+from tqdm import tqdm
 
+genre_pages = set()
 pages = set()
 
 def write_data(html):
@@ -88,45 +90,57 @@ def write_text(URL):
     soup = BeautifulSoup(requests.get(URL).content,'lxml') # bsでURL内を解析
     for link in soup.find(id="M_itemImg").findAll("p"): # pタグを取得しlinkに格納
         print(link.getText())
-        
+
+#重複する行の削除
 def drop_csv():
     drop_csv = pd.read_csv("data/book.csv")
     settled_csv = drop_csv.drop_duplicates(['url'],keep='first')
     settled_csv.to_csv('data/book.csv',index=False)
     
 #巡回するリンクのリストを作る
-#seleniumには屈服した
-def enum_links (base_html):
-    print("作業中")
-    global pages
-    #base_html = urlparse(base_html).scheme+"://"+urlparse(base_html).netloc
+def genre_links(first_url,driver):
+    print("ジャンルごとのURLを集めている")
+    #サイトのページを取得
+    driver.get(first_url)
+
     try:
-        soup = BeautifulSoup(requests.get(base_html).content,'lxml')
+        driver.find_element_by_xpath('//*[@id="M_ctg1_5745"]/span/a').click()
+        #レンダリングを待つ
+        sleep(5)
+        click_html = driver.page_source
     except:
+        print("clickできてないよ")
+        driver.close()
+
+    try:
+        soup = BeautifulSoup(click_html,'lxml')
+    except:
+        print("soupがとれない")
         return
-    '''
-    options = webdriver.chrome.options.Options()
-    options.add_argument("--headless")#これを消せばブラウザ画面が出る
-    
-    driver = webdriver.Chrome(chrome_options=options)
+
+
+    for a_tag in soup.find_all(href=re.compile("/shopbrand/genre*")):
+        print(a_tag)
+        if 'href' in a_tag.attrs:
+            if('shopdetail' in a_tag.attrs['href'] or 'shopbrand' in a_tag.attrs['href']):
+                href = a_tag.attrs['href']
+                genre_Page = urljoin('http://www.hayakawa-online.co.jp/',href)
+                if genre_Page not in genre_pages:
+                    genre_pages.add(genre_Page)
+
+
+#ジャンルごとの書籍の詳細のURLを集める
+def enum_links (genre_url):
+    print("作業中")
 
     try:
-        driver.get(base_html)
-        len_driver = driver.find_element_by_xpath('//*[@id="M_ctg1_3"]/span/a').click()
-        soup = BeautifulSoup(len_driver.page_source,'lxml')
-        len_driver.close()
-        print("クリックしたよ")
+        soup = BeautifulSoup(requests.get(genre_url).content,'lxml')
     except:
-        try:
-            soup = BeautifulSoup(requests.get(base_html).content,'lxml')
-        except:
-            return
+        print("soupがとれない")
+        return
 
-    driver.close()
-    '''
-    #links = soup.findAll('a',href=re.compile("^shopbrand/*|^shopdetail/*"))
-    #returnがおかしいと思われ
-    for a in soup.findAll(href=re.compile("^/shopbrand/genre*|^/shopdetail/.*/order/$")):
+    
+    for a in soup.findAll(href=re.compile("^/shopdetail/.*/order/$")):
         #hrefがあるか確かめる
         if'href' in a.attrs:
            #一度解析したリンクに飛んでないか確かめる
@@ -137,43 +151,29 @@ def enum_links (base_html):
                     pages.add(newPage)
                     print(len(pages))
                     enum_links(newPage) 
-    else:
-        return pages
-
-#selenium操作関数
-def analyze_html(url):	
-    options = webdriver.chrome.options.Options()
-    options.add_argument("--headless")#これを消せばブラウザ画面が出る
-    
-    driver = webdriver.Chrome(chrome_options=options)
-    #driverをゲットできなかったらurlを返す,ット出来たらjs実行後のdriverか実行してないdriverを返す
-    try:
-        driver.get(url)
-    except:
-        print("urlとして返すわ")
-        return url
-    try:
-        #driver.execute_script("showMakeShopChildCategory")
-        print("実行後のドライバー返した")
-        return driver
-    except:
-        print("driver返した")
-        return driver
+            else:
+                print("失敗")
+                return
 
 def main():
-    original_url = ['http://www.hayakawa-online.co.jp/shopbrand/genre_001001/','http://www.hayakawa-online.co.jp/shopbrand/genre_001002/','http://www.hayakawa-online.co.jp/shopbrand/genre_001003/','http://www.hayakawa-online.co.jp/shopbrand/genre_001004/','http://www.hayakawa-online.co.jp/shopbrand/genre_001004/','http://www.hayakawa-online.co.jp/shopbrand/genre_001006/','http://www.hayakawa-online.co.jp/shopbrand/genre_001007/','http://www.hayakawa-online.co.jp/shopbrand/genre_001008/','http://www.hayakawa-online.co.jp/shopbrand/genre_002008/','http://www.hayakawa-online.co.jp/shopbrand/genre_001009/','http://www.hayakawa-online.co.jp/shopbrand/genre_001010/','http://www.hayakawa-online.co.jp/shopbrand/genre_001011/','http://www.hayakawa-online.co.jp/shopbrand/genre_001012/','http://www.hayakawa-online.co.jp/shopbrand/genre_001013/','http://www.hayakawa-online.co.jp/shopbrand/genre_001014/','http://www.hayakawa-online.co.jp/shopbrand/genre_001015/','http://www.hayakawa-online.co.jp/shopbrand/genre_001016/']
-    #original_url = "http://www.hayakawa-online.co.jp/shopdetail/000000013936/genre_001002/"
-    #url = "http://www.hayakawa-online.co.jp/"
+    url = "http://www.hayakawa-online.co.jp/"
+    options = webdriver.chrome.options.Options()
+    options.add_argument("--headless")#これを消せばブラウザ画面が出る
+
+    driver = webdriver.Chrome(chrome_options=options)
+
     create_csv()
-    #write_data(analyze_html(url))
-    for url in original_url:
-        link = enum_links(url)
-        for next_link in link:
-            print("取得したURLだよ！")
-            print(next_link)
-            write_data(next_link)
-            drop_csv()
-            sleep(0.0001)
+    genre_links(url,driver)
+    print(genre_pages)
+
+    for url in genre_pages:
+        enum_links(url)
+    for link in tqdm(pages):
+        print("取得したURL")
+        write_data(link)
+        sleep(0.001)
+    drop_csv()
+    print("完了！！！！！")
 
 if __name__ == '__main__':
     main()
