@@ -55,7 +55,6 @@ def write_data(html):
             csv_data["text"] = str(link.getText())
             csv_data.drop_duplicates(['text'],keep='first')
 
-        
         csv_data.to_csv("data/book.csv",encoding="utf-8",index=False,mode="a")
         print("成功したよ\n") # 確認
     except AttributeError:
@@ -128,7 +127,6 @@ def genre_links(first_url,driver):
                 if genre_Page not in genre_pages:
                     genre_pages.add(genre_Page)
 
-
 #ジャンルごとの書籍の詳細のURLを集める
 def enum_links (genre_url):
     print("作業中")
@@ -139,7 +137,6 @@ def enum_links (genre_url):
         print("soupがとれない")
         return
 
-    
     for a in soup.findAll(href=re.compile("^/shopdetail/.*/order/$")):
         #hrefがあるか確かめる
         if'href' in a.attrs:
@@ -159,9 +156,9 @@ def main():
     url = "http://www.hayakawa-online.co.jp/"
     options = webdriver.chrome.options.Options()
     options.add_argument("--headless")#これを消せばブラウザ画面が出る
-
     driver = webdriver.Chrome(chrome_options=options)
 
+    #CSVを作ることころがなかったら作る
     create_csv()
     genre_links(url,driver)
     print(genre_pages)
