@@ -1,176 +1,213 @@
-import requests # urlを読み込むためrequestsをインポート
-from bs4 import BeautifulSoup # htmlを読み込むためBeautifulSoupをインポート
-import pandas as pd
-import os.path
-from urllib.request import urlopen
-from urllib.parse import urljoin
-from urllib.parse import urlparse
-import re
+# coding*utf-8
+from bs4 import BeautifulSoup, element
 from selenium import webdriver
-from selenium.webdriver.common.by import By
+from selenium.webdriver.support import ui
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from time import sleep
+from selenium.webdriver.common.keys import Keys
 from tqdm import tqdm
+import os
+from selenium.webdriver.common.alert import Alert
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.action_chains import ActionChains
 
-genre_pages = set()
-pages = set()
-
-def write_data(html):
-    print("書き込むよ")
-    images = [] # 画像リストの配列
-    csv_data = pd.read_csv("data/book.csv")
-    try:
-        soup = BeautifulSoup(requests.get(html).content,'lxml') # bsでURL内を解析
-        #soup = BeautifulSoup(html.page_source.encode('utf-8'),'lxml') 
-        print('取得したタイトル')
-        print(soup.title.string)
-        for link in soup.find(id="M_itemImg").findAll("img"): # imgタグを取得しlinkに格納
-            if link.get("src").endswith(".jpg"): # imgタグ内の.jpgであるsrcタグを取得
-                images.append(link.get("src")) # imagesリストに格納
-            elif link.get("src").endswith(".png"): # imgタグ内の.pngであるsrcタグを取得
-                images.append(link.get("src")) # imagesリストに格納
-        print(images)
-        
-        ############################
-        #画像名,URLを保存する処理を書く
-        ############################
-        for target in images: # imagesからtargetに入れる
-            re = requests.get(target)
-            #正規表現でURLから画像名だけを抽出してCSVに書き込み
-            csv_data["url"] = html
-            csv_data["image"] = target.split('/')[-1]
-            csv_data["title"] = soup.title.string
-            csv_data.drop_duplicates(['url'],keep='first')
-            csv_data.drop_duplicates(['image'],keep='first')
-            csv_data.drop_duplicates(['title'],keep='first')
-
-            #画像があるときだけURLを書き込む
-            with open('img/' + target.split('/')[-1], 'wb') as f: # imgフォルダに格納
-                f.write(re.content) # .contentにて画像データとして書き込む
-        
-        #CSVにテキストを書き込む
-        for link in soup.find(id="M_itemDetail").findAll("p"):
-            print(link.getText())
-            csv_data["text"] = str(link.getText())
-            csv_data.drop_duplicates(['text'],keep='first')
-
-        csv_data.to_csv("data/book.csv",encoding="utf-8",index=False,mode="a")
-        print("成功したよ\n") # 確認
-    except AttributeError:
-        import traceback
-        traceback.print_exc()
-        print("AttributeError")
-        pass
-    except:
-        print("失敗した\n")
-        pass
-        
-#dataディレクトリを作成しdataディレクトリにcsvファイルが作成されていない時にファイルを作成する
-def create_csv():
-	#フォルダ確認、作成
-	if os.path.isdir("data"):
-		pass
-	else:
-		os.mkdir("data")
-	if os.path.isdir("img"):
-		pass
-	else:
-		os.mkdir("img")
-	#CSVファイル確認、作成
-	if os.path.isfile("data/book.csv"):
-		pass
-	else:
-		csv_data = pd.DataFrame(index=[],columns=["url","image","text","title"])
-		csv_data.to_csv("data/book.csv",index=False)
-
-#未実装
-def write_text(URL):
-    soup = BeautifulSoup(requests.get(URL).content,'lxml') # bsでURL内を解析
-    for link in soup.find(id="M_itemImg").findAll("p"): # pタグを取得しlinkに格納
-        print(link.getText())
-
-#重複する行の削除
-def drop_csv():
-    drop_csv = pd.read_csv("data/book.csv")
-    settled_csv = drop_csv.drop_duplicates(['url'],keep='first')
-    settled_csv.to_csv('data/book.csv',index=False)
-    
-#巡回するリンクのリストを作る
-def genre_links(first_url,driver):
-    print("ジャンルごとのURLを集めている")
-    #サイトのページを取得
-    driver.get(first_url)
-
-    try:
-        driver.find_element_by_xpath('//*[@id="M_ctg1_5745"]/span/a').click()
-        #レンダリングを待つ
-        sleep(5)
-        click_html = driver.page_source
-    except:
-        print("clickできてないよ")
+def readUrlFile(filepath):
+    if os.path.exists(filepath):
+        with open(filepath,'r') as f:
+            url_list = f.read().split("\n")
+        return url_list
+    else:
+        print("ファイルがないから作ります")
+        os.makedirs('SnapUrl',exist_ok=True)
+        with open(filepath,'w') as f:
+            f.write('ここにURLを書く(この文字は消す)')
+        print('Done')
         driver.close()
+        exit()
 
-    try:
-        soup = BeautifulSoup(click_html,'lxml')
-    except:
-        print("soupがとれない")
-        return
+def readInputFile(filepath):
+    if  os.path.exists(filepath):
+        with open(filepath,'r') as f:
+            input_list = f.read().split("\n")
+        return input_list
+    else:
+        print("ファイルがないから作ります")
+        os.makedirs('SnapUrl/input/',exist_ok=True)
+        with open(filepath,'w') as f:
+            f.write('ここに入力内容を書く(この文字は消す)')
+        print('Done')
+        exit()
 
+#region Azure用
+#Azure用
+def enum_link_azure(url,driver,target):
+    search =  driver.find_elements_by_class_name(target)
+    #urls = [_.get_attribute('href') for _ in search
+    urls = [_.text for _ in search]
+    if urls == []:
+        print("リンクがカラ")
+    for url in urls:
+        try:
+            Alert(driver).accept()
+        except:
+            pass
+        print(url)
+        #driver.get(url)
+        
+        #print(driver.find_element_by_css_selector('.fxs-blade-title-titleText.msportalfx-tooltip-overflow').text)
+        #driver.save_screenshot(driver.title + ".png")
 
-    for a_tag in soup.find_all(href=re.compile("/shopbrand/genre*")):
-        print(a_tag)
-        if 'href' in a_tag.attrs:
-            if('shopdetail' in a_tag.attrs['href'] or 'shopbrand' in a_tag.attrs['href']):
-                href = a_tag.attrs['href']
-                genre_Page = urljoin('http://www.hayakawa-online.co.jp/',href)
-                if genre_Page not in genre_pages:
-                    genre_pages.add(genre_Page)
-
-#ジャンルごとの書籍の詳細のURLを集める
-def enum_links (genre_url):
-    print("作業中")
-
-    try:
-        soup = BeautifulSoup(requests.get(genre_url).content,'lxml')
-    except:
-        print("soupがとれない")
-        return
-
-    for a in soup.findAll(href=re.compile("^/shopdetail/.*/order/$")):
-        #hrefがあるか確かめる
-        if'href' in a.attrs:
-           #一度解析したリンクに飛んでないか確かめる
-            if('shopdetail' in a.attrs['href'] or 'shopbrand' in a.attrs['href']):
-                href = a.attrs['href']
-                newPage = urljoin('http://www.hayakawa-online.co.jp/',href)
-                if newPage not in pages:
-                    pages.add(newPage)
-                    print(len(pages))
-                    enum_links(newPage) 
+def get_table(driver,target):
+    tableElem = driver.find_elements_by_class_name(target)
+    #trs = tableElem.find_elements(By.TAG_NAME, "tr")
+    trs = [_.tr for _ in tableElem]
+    for i in range(1,len(trs)):
+        tds = trs[i].find_elements(By.TAG_NAME, "td")
+        line = ""
+        for j in range(0,len(tds)):
+            if j < len(tds)-1:
+                line += "%s\t" % (tds[j].text)
             else:
-                print("失敗")
-                return
+                line += "%s" % (tds[j].text)
+        print(line +"\r\n")
 
-def main():
-    url = "http://www.hayakawa-online.co.jp/"
-    options = webdriver.chrome.options.Options()
-    options.add_argument("--headless")#これを消せばブラウザ画面が出る
-    driver = webdriver.Chrome(chrome_options=options)
+#endregion
 
-    #CSVを作ることころがなかったら作る
-    create_csv()
-    genre_links(url,driver)
-    print(genre_pages)
+#region screenshot
+def enum_shot(file,slowfile):
+    urls = readUrlFile(file)
+    slows = readUrlFile(slowfile)
+    #operation_login_tk(driver,id,password)
+    index = 0
+    for url in urls:
+        try:
+            print(url)
+            driver.get(url)
+            WebDriverWait(driver,10).until(EC.presence_of_all_elements_located)
+            if  os.path.exists('SnapShot/' + mode):
+                driver.save_screenshot('SnapShot/' + mode + '/' + str(index) + '.png')
+            else:
+                os.makedirs('SnapShot/' + mode,exist_ok=True)
+                driver.save_screenshot('SnapShot/' + mode + '/' + str(index) + '.png')
+            index += 1
+            print(url + ":DONE")
+        except:
+            index += 1
+            print(url + ":Failure")
+    #読み込みが遅いやつ用のスクリーンショット
+    for url in slows:
+        print(url)
+        driver.get(url)
+        sleep(5)
+        if  os.path.exists('SnapShot/' + mode):
+                driver.save_screenshot('SnapShot/' + mode + '/' + str(index) + '.png')
+        else:
+                os.makedirs('SnapShot/' + mode,exist_ok=True)
+                driver.save_screenshot('SnapShot/' + mode + '/' + str(index) + '.png')
+        index += 1
+        print(url + ":DONE")
+    driver.close()
 
-    for url in genre_pages:
-        enum_links(url)
-    for link in tqdm(pages):
-        print("取得したURL")
-        write_data(link)
-        sleep(0.001)
-    drop_csv()
-    print("完了！！！！！")
+#endregion
 
-if __name__ == '__main__':
-    main()
+def enum_shot_login(file):
+    operation_login_tk(driver)
+    urls = readUrlFile(file)
+    filepath = "SnapUrl/input/"
+    index = 0 #ログイン必要じゃない分だけ足す
+    for url in urls:
+        print(url)
+        driver.get(url)
+        click_pharmacy_list_item_title(driver)
+        #el = WebAnalyze.get_input_tag(url)
+        filename = filepath + last_url(url)
+        input_page(filename,el,driver)
+        index += 1
+
+#ページ内の指定された要素に値を入力する関数
+def input_page(filepath,element_list,driver):
+    if os.path.exists(filepath):
+        with open(filepath,'r') as f:
+            input_list = f.read().split("\n")
+    for el,input in zip(element_list,input_list):
+        id = driver.find_elemnt_by_id(el)
+        id.send_keys(input)
+
+def operation_login_tk(driver,id,password):
+    driver.get(login_dic[mode])
+    singnin_btn = driver.find_element_by_class_name('user-menu')
+    singnin_btn.click()
+    sleep(5)
+    print(driver.current_url)
+    login_id = driver.find_element_by_id('logonIdentifier')
+    login_id.send_keys(id)
+    login_pass = driver.find_element_by_id('password')
+    #ここにパスワード入れる
+    login_pass.send_keys(password)
+    login_btn =  driver.find_element_by_id('next')
+    login_btn.click()
+    sleep(10)
+
+def operation_logout_tk(driver):
+    driver.get('https://tk-dev-v3:dev100kg@v3.okp-tdk-dev.tk/')
+    sleep(5)
+    hamburger_btn = driver.find_element_by_class_name('gnav-button')
+    hamburger_btn.click()
+    sleep(5)
+    logout_btn = driver.find_element_by_css_selector('.app-button.btn.gnav-login-button-logout')
+    logout_btn.click()
+    sleep(10)
+
+#薬局を選ぶ
+def click_pharmacy_list_item_title(driver):
+    sleep(5)
+    print(driver.current_url)
+    pharmacy_btn = driver.find_elements_by_class_name('pharmacy-list-item')
+    ActionChains(driver).move_to_element(pharmacy_btn).click(pharmacy_btn).perform()
+
+#日付を選ぶ
+def click_day_calendar(driver):
+    days_btn = driver.find_element_by_css_selector('.text-field.date-input.success')
+    days_btn.send_keys("2021-07-20")
+
+#情報入力完了ボタン
+def next_form(driver):
+    next_btn = driver.find_element_by_css_selector('.commit-button.btn.btn--accent.commit-button-disabled')
+    next_btn.click()
+
+#性別選択ボタン
+def gender_button(driver):
+    gen_btn = driver.find_element_by_class_name('radio-label')
+    gen_btn.click()
+
+#URLの最後の部分だけをファイル形式にして抽出する関数
+def last_url(url):
+    target = '/'
+    idx = url.rfind(target)
+    targetfile = url[:idx]
+    idx = targetfile.rfind(target) + 1 #スラッシュが入らないようにする
+    targetfile = targetfile[idx:]
+    return targetfile + ".txt"
+
+def mode_select(mode):
+    filepath = "SnapUrl/" + mode + "_url_list.txt"
+    slowpath = "SnapUrl/" + mode + "_url_list_slow.txt"
+    return filepath,slowpath
+
+
+login_dic = {"dev": "https://tk-dev-v3:dev100kg@v3.okp-tdk-dev.tk/","stg":"https://todokusuriv3:kokusanbakuga100%@tk-stg-v3.todokusuri.work/","prd":"https:///todokusuri.com/"}
+print("メールアドレス:")
+id = input()
+print("pass:")
+password = input()
+print("'dev' or 'stg' or 'prd'")
+mode = input()
+filepath,slowfile = mode_select(mode)
+driver = webdriver.Chrome()
+
+
+enum_shot(filepath,slowfile)
